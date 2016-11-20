@@ -1,8 +1,11 @@
 <template>
   <div id="app">
-    <transition name="up">
+    <transition
+    v-on:after-enter="afterEnter"
+    v-on:before-leave="beforeLeave"
+    >
       <div class="up-loader" v-show="!upFinish">
-        <span class="loader-text">Loading</span>
+        <span class="loader-text"></span>
       </div>
     </transition>
 
@@ -10,15 +13,21 @@
     <List :page="page" @hide="hideLoading"></List>
     <a class="button" @click="goNext">go next<span>current:{{page}}</span></a>
 
-    <transition name="down">
+    <transition
+    v-on:before-enter="beforeEnter"
+    v-on:enter="enter"
+    v-on:after-enter="afterEnter"
+    v-on:before-leave="beforeLeave"
+    >
       <div class="down-loader" v-show="!downFinish">
-        <span class="loader-text">Loading</span>
+        <span class="loader-text"></span>
       </div>
     </transition>
   </div>
 </template>
 
 <script>
+import $ from 'jquery'
 import List from './components/List'
 
 export default {
@@ -30,7 +39,8 @@ export default {
       page: 1,
       upFinish: true,
       downFinish: true,
-      up: true
+      up: true,
+      showLoading: false
     }
   },
   methods: {
@@ -47,10 +57,29 @@ export default {
       }
       this.page--
     },
+    beforeEnter: function (el) {
+      // 想写成类似iscroll的效果，奈何这里的loading一直不显示啊，不知道vue内部是怎么控制钩子函数的执行的
+      $(el).parent().append('<div class="loading">loading</div>')
+    },
+    enter: function (el) {
+      $('.loading').remove()
+    },
+    afterEnter: function (el) {
+      $(el).find('.loader-text').text('正在加载')
+    },
+    beforeLeave: function (el) {
+      $(el).find('.loader-text').text('加载完毕')
+    },
     hideLoading () {
       setTimeout(() => {
         this.upFinish = this.downFinish = true
       }, 200)
+    },
+    sleep (ms) {
+      ms += new Date().getTime()
+      while (new Date() < ms) {
+
+      }
     }
   }
 }
@@ -74,60 +103,33 @@ export default {
   color: #d6d6d6;
 }
 .up-loader, .down-loader {
-    position: fixed;
-    background-color: #212121;
-    z-index: 1;
-    width: 100%;
+  position: fixed;
+  width: 100%;
+  padding: 1rem;
+  background-color: #212121;
 }
 .up-loader{
   top: 0;
 }
 .down-loader{
+  height: 5rem;
   bottom: 0;
+  color: #ffffff;
 }
 .loader-text{
     font-size: 5rem;
+    background-color: #212121;
     color: #ffffff;
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, 50%);
+    width: 100%;
+    text-align: center;
 }
-.down-enter-active {
-  animation: expand .5s 1 cubic-bezier(0, 1, 0, 1) both;
-}
-.down-leave-active {
+.loading{
+  position: fixed;
   bottom: 0;
-  height: auto;
-  animation: collapse .5s 1 cubic-bezier(0, 1, 0, 1) both;
+  height: 5rem;
+  width: 100%;
+  background: green;
+  color:red;
 }
-.up-enter-active {
-  animation: expand .5s 1 cubic-bezier(0, 1, 0, 1) both;
-}
-.up-leave-active {
-  top: 0;
-  height: auto;
-  animation: collapse .5s 1 cubic-bezier(0, 1, 0, 1) both;
-}
-@keyframes expand {
-  0% {
-    height: 3em;
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    height: 100%;
-    transform: translate3d(0, 0, 0);
-  }
-}
-@keyframes collapse {
-  0% {
-    height: 100%;
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    height: 3em;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
 </style>
